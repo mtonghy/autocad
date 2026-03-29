@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoCAD Ocean Quiz</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bubblegum+Sans&display=swap');
+
+:root {
+  --deep: #0a1628;
+  --ocean: #0d3b6e;
+  --mid: #0e6ba8;
+  --teal: #0aa3b5;
+  --foam: #a8e6cf;
+  --sand: #f4d03f;
+  --coral: #ff6b6b;
+  --correct: #2ecc71;
+  --wrong: #e74c3c;
+  --pearl: #f0f8ff;
+  --shell: #ffb347;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: linear-gradient(180deg, #0a1628 0%, #0d3b6e 40%, #0e6ba8 75%, #1a8fa8 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ===== OCEAN BACKGROUND ===== */
+.ocean-bg {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+}
+
+/* Caustic light rays */
+.rays {
+  position: absolute; top: 0; left: 0; width: 100%; height: 60%;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent, transparent 8%,
+    rgba(100,220,255,0.03) 8%, rgba(100,220,255,0.03) 9%
+  );
+  animation: sway 8s ease-in-out infinite;
+}
+@keyframes sway { 0%,100%{transform:skewX(0deg)} 50%{transform:skewX(3deg)} }
+
+/* Bubbles */
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), rgba(255,255,255,0.1));
+  border: 1px solid rgba(255,255,255,0.3);
+  animation: rise linear infinite;
+}
+@keyframes rise {
+  0% { transform: translateY(100vh) translateX(0) scale(0.8); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(-100px) translateX(30px) scale(1.1); opacity: 0; }
+}
+
+/* Sand floor */
+.sand-floor {
+  position: fixed; bottom: 0; left: 0; right: 0; height: 80px;
+  background: linear-gradient(0deg, #c8a84b 0%, #e8c76a 60%, transparent 100%);
+  z-index: 0;
+}
+.sand-floor::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 20px;
+  background: repeating-radial-gradient(ellipse 20px 8px at 50% 50%, rgba(0,0,0,0.1) 0%, transparent 70%);
+  background-size: 40px 16px;
+}
+
+/* Seaweed */
+.seaweed {
+  position: fixed; bottom: 60px; pointer-events: none; z-index: 1;
+}
+.seaweed-strand {
+  width: 12px; height: 80px;
+  background: linear-gradient(180deg, #27ae60, #1a8a45);
+  border-radius: 6px;
+  transform-origin: bottom center;
+  animation: weedy 3s ease-in-out infinite;
+  display: inline-block;
+  margin: 0 4px;
+}
+@keyframes weedy { 0%,100%{transform:rotate(-15deg)} 50%{transform:rotate(15deg)} }
+
+/* Fish swimming */
+.fish {
+  position: fixed; pointer-events: none; z-index: 1;
+  animation: swim linear infinite;
+  font-size: 28px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+@keyframes swim {
+  0%   { transform: translateX(-80px) scaleX(1); }
+  49%  { transform: translateX(110vw) scaleX(1); }
+  50%  { transform: translateX(110vw) scaleX(-1); }
+  99%  { transform: translateX(-80px) scaleX(-1); }
+  100% { transform: translateX(-80px) scaleX(1); }
+}
+
+/* ===== LAYOUT ===== */
+#app {
+  position: relative; z-index: 10;
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px 16px 120px;
+}
+
+/* ===== TITLE SCREEN ===== */
+#title-screen {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; text-align: center;
+  min-height: 100vh; gap: 20px;
+}
+.title-creature {
+  font-size: 90px;
+  animation: float 3s ease-in-out infinite;
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4));
+}
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+.title-main {
+  font-family: 'Bubblegum Sans', cursive;
+  font-size: clamp(36px,7vw,64px);
+  color: var(--foam);
+  text-shadow: 0 4px 20px rgba(0,200,255,0.5), 0 0 60px rgba(0,150,255,0.3);
+  line-height: 1.1;
+}
+.title-sub {
+  font-size: 16px; color: var(--teal); letter-spacing: 3px;
+  text-transform: uppercase; font-weight: 700;
+}
+.title-info {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(100,220,255,0.2);
+  border-radius: 20px;
+  padding: 20px 32px;
+  color: rgba(255,255,255,0.75);
+  font-size: 15px; line-height: 1.8;
+}
+.title-info span { color: var(--sand); font-weight: 800; }
+
+.btn-start {
+  background: linear-gradient(135deg, #0aa3b5, #0e6ba8);
+  color: white; border: none; cursor: pointer;
+  font-family: 'Bubblegum Sans', cursive;
+  font-size: 22px;
+  padding: 16px 48px;
+  border-radius: 50px;
+  box-shadow: 0 8px 30px rgba(10,163,181,0.5), 0 0 0 3px rgba(255,255,255,0.1);
+  transition: all 0.2s;
+  position: relative; overflow: hidden;
+}
+.btn-start:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 12px 40px rgba(10,163,181,0.7);
+}
+.btn-start:active { transform: translateY(0) scale(0.98); }
+
+/* ===== QUIZ AREA ===== */
+#quiz-area { width: 100%; max-width: 760px; }
+
+/* Progress */
+.progress-bar-wrap {
+  margin-bottom: 16px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 50px; height: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal), var(--foam));
+  border-radius: 50px;
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 0 10px rgba(100,220,200,0.5);
+}
+.progress-meta {
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: rgba(255,255,255,0.5);
+  margin-bottom: 8px; font-weight: 600;
+}
+.score-badge {
+  background: rgba(255,255,255,0.1);
+  border-radius: 20px; padding: 3px 12px;
+  font-size: 13px; color: var(--foam); font-weight: 700;
+}
+
+/* Question Card */
+.q-card {
+  background: rgba(13,30,60,0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(100,200,255,0.15);
+  border-radius: 24px;
+  padding: 36px 40px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07);
+  position: relative;
+  animation: cardIn 0.4s cubic-bezier(.4,0,.2,1);
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.q-card::before {
+  content: '';
+  position: absolute; top: 0; left: 24px; right: 24px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--teal), transparent);
+  border-radius: 2px;
+}
+
+.q-category {
+  font-size: 11px; font-weight: 800; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--teal);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.q-num {
+  background: rgba(10,163,181,0.2);
+  border-radius: 20px; padding: 2px 10px;
+  font-size: 12px; color: rgba(255,255,255,0.5);
+}
+.q-text {
+  font-size: 17px; line-height: 1.65; color: var(--pearl);
+  font-weight: 600; margin-bottom: 28px;
+}
+
+/* Options */
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 14px 20px;
+  border: 2px solid rgba(100,200,255,0.12);
+  border-radius: 16px; cursor: pointer;
+  background: rgba(255,255,255,0.04);
+  transition: all 0.18s ease;
+  position: relative; overflow: hidden;
+}
+.option::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,0.08), transparent 60%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.option:hover:not(.disabled)::before { opacity: 1; }
+.option:hover:not(.disabled) {
+  border-color: rgba(10,163,181,0.5);
+  background: rgba(10,163,181,0.1);
+  transform: translateX(4px);
+}
+.option.selected {
+  border-color: var(--teal);
+  background: rgba(10,163,181,0.15);
+}
+.option.correct {
+  border-color: var(--correct);
+  background: rgba(46,204,113,0.12);
+  animation: correctPop 0.4s cubic-bezier(.2,.8,.3,1.4);
+}
+.option.wrong {
+  border-color: var(--wrong);
+  background: rgba(231,76,60,0.12);
+  animation: wrongShake 0.4s ease;
+}
+.option.reveal {
+  border-color: rgba(46,204,113,0.4);
+  background: rgba(46,204,113,0.07);
+}
+.option.disabled { cursor: default; }
+
+@keyframes correctPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.03) translateX(4px); }
+  100% { transform: scale(1) translateX(4px); }
+}
+@keyframes wrongShake {
+  0%,100% { transform: translateX(0); }
+  20%  { transform: translateX(-6px); }
+  40%  { transform: translateX(6px); }
+  60%  { transform: translateX(-4px); }
+  80%  { transform: translateX(4px); }
+}
+
+.opt-letter {
+  width: 28px; height: 28px; min-width: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: rgba(255,255,255,0.5);
+  font-family: 'Bubblegum Sans', cursive;
+  transition: all 0.18s;
+}
+.option.correct .opt-letter { background: var(--correct); border-color: var(--correct); color: white; }
+.option.wrong .opt-letter { background: var(--wrong); border-color: var(--wrong); color: white; }
+.option.selected .opt-letter { background: var(--teal); border-color: var(--teal); color: white; }
+
+.opt-text { font-size: 15px; line-height: 1.5; color: rgba(255,255,255,0.8); padding-top: 4px; }
+.option.correct .opt-text { color: var(--foam); font-weight: 700; }
+.option.wrong .opt-text { color: rgba(255,100,100,0.9); }
+
+/* Explanation */
+.explanation {
+  margin-top: 16px; padding: 14px 18px;
+  background: rgba(10,163,181,0.1);
+  border-left: 3px solid var(--teal);
+  border-radius: 0 12px 12px 0;
+  font-size: 14px; color: rgba(200,240,255,0.85); line-height: 1.6;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* Next button */
+.btn-next {
+  margin-top: 20px; width: 100%;
+  background: linear-gradient(135deg, #0aa3b5, #0e6ba8);
+  color: white; border: none; cursor: pointer;
+  font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 800;
+  padding: 14px 32px; border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(10,163,181,0.4);
+  transition: all 0.2s; display: none; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-next.visible { display: flex; animation: fadeIn 0.3s ease; }
+.btn-next:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(10,163,181,0.6); }
+
+/* ===== REACTION OVERLAY ===== */
+#reaction {
+  position: fixed; inset: 0; z-index: 100;
+  pointer-events: none; display: flex; align-items: center; justify-content: center;
+}
+.reaction-burst {
+  font-size: 80px; opacity: 0;
+  animation: burst 1s ease forwards;
+}
+@keyframes burst {
+  0%   { opacity:0; transform:scale(0.3) rotate(-20deg); }
+  30%  { opacity:1; transform:scale(1.3) rotate(10deg); }
+  60%  { opacity:1; transform:scale(1) rotate(0deg); }
+  100% { opacity:0; transform:scale(0.8) translateY(-40px); }
+}
+.particles {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  animation: particleFly 0.8s ease forwards;
+}
+@keyframes particleFly {
+  from { opacity:1; transform: translate(0,0) scale(1); }
+  to   { opacity:0; transform: translate(var(--dx),var(--dy)) scale(0.3); }
+}
+
+/* ===== RESULTS SCREEN ===== */
+#results-screen {
+  width: 100%; max-width: 700px;
+  text-align: center; padding: 40px 20px;
+}
+.results-creature {
+  font-size: 100px; animation: float 3s ease-in-out infinite;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.4));
+}
+.results-title {
+  font-family: 'Bubblegum Sans', cursive;
+  font-size: 42px; color: var(--foam);
+  text-shadow: 0 4px 20px rgba(0,200,255,0.5);
+  margin: 16px 0 8px;
+}
+.results-subtitle { font-size: 16px; color: rgba(200,240,255,0.7); margin-bottom: 32px; }
+.score-circle {
+  width: 160px; height: 160px;
+  border-radius: 50%;
+  background: conic-gradient(var(--teal) var(--pct, 0%), rgba(255,255,255,0.1) 0%);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 32px;
+  position: relative;
+  box-shadow: 0 0 40px rgba(10,163,181,0.4);
+}
+.score-circle::before {
+  content: ''; position: absolute; inset: 10px;
+  border-radius: 50%; background: #0d1f40;
+}
+.score-inner { position: relative; z-index: 1; text-align: center; }
+.score-pct { font-family: 'Bubblegum Sans', cursive; font-size: 38px; color: var(--foam); }
+.score-label { font-size: 12px; color: var(--teal); letter-spacing: 2px; font-weight: 700; }
+.score-stats {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px; margin-bottom: 28px;
+}
+.stat-box {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(100,200,255,0.15);
+  border-radius: 16px; padding: 16px;
+}
+.stat-num { font-family: 'Bubblegum Sans', cursive; font-size: 28px; }
+.stat-num.good { color: var(--correct); }
+.stat-num.bad  { color: var(--wrong); }
+.stat-num.neutral { color: var(--teal); }
+.stat-lbl { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; font-weight: 700; letter-spacing: 1px; }
+
+.btn-restart {
+  background: linear-gradient(135deg, #0aa3b5, #0e6ba8);
+  color: white; border: none; cursor: pointer;
+  font-family: 'Bubblegum Sans', cursive; font-size: 20px;
+  padding: 16px 44px; border-radius: 50px;
+  box-shadow: 0 8px 30px rgba(10,163,181,0.5);
+  transition: all 0.2s;
+}
+.btn-restart:hover { transform: translateY(-3px) scale(1.04); }
+
+/* ===== FLOATING DECORATIONS ===== */
+.deco {
+  position: fixed; pointer-events: none; z-index: 1;
+  font-size: 32px; opacity: 0.25;
+  animation: drift linear infinite;
+}
+@keyframes drift {
+  0%   { transform: translate(0,0) rotate(0deg); }
+  25%  { transform: translate(12px,-8px) rotate(90deg); }
+  50%  { transform: translate(5px,-15px) rotate(180deg); }
+  75%  { transform: translate(-8px,-8px) rotate(270deg); }
+  100% { transform: translate(0,0) rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .q-card { padding: 24px 20px; }
+  .q-text { font-size: 15px; }
+  .opt-text { font-size: 14px; }
+  .score-stats { grid-template-columns: 1fr 1fr; }
+}
+
+/* Hidden */
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- Ocean Background -->
+<div class="ocean-bg">
+  <div class="rays"></div>
+</div>
+<div class="sand-floor"></div>
+
+<!-- Seaweed clusters -->
+<div class="seaweed" style="left:3%">
+  <span class="seaweed-strand" style="animation-delay:0s;height:90px"></span>
+  <span class="seaweed-strand" style="animation-delay:0.4s;height:60px"></span>
+  <span class="seaweed-strand" style="animation-delay:0.8s;height:80px"></span>
+</div>
+<div class="seaweed" style="left:15%">
+  <span class="seaweed-strand" style="animation-delay:0.2s;height:70px"></span>
+  <span class="seaweed-strand" style="animation-delay:0.6s;height:50px"></span>
+</div>
+<div class="seaweed" style="right:5%">
+  <span class="seaweed-strand" style="animation-delay:0.1s;height:85px"></span>
+  <span class="seaweed-strand" style="animation-delay:0.5s;height:65px"></span>
+  <span class="seaweed-strand" style="animation-delay:0.9s;height:95px"></span>
+</div>
+<div class="seaweed" style="right:20%">
+  <span class="seaweed-strand" style="animation-delay:0.3s;height:55px"></span>
+  <span class="seaweed-strand" style="animation-delay:0.7s;height:75px"></span>
+</div>
+
+<!-- Decorations -->
+<div class="deco" style="top:15%;left:4%;animation-duration:12s">🌊</div>
+<div class="deco" style="top:35%;right:3%;animation-duration:15s;animation-delay:-5s">🐠</div>
+<div class="deco" style="top:55%;left:6%;animation-duration:18s;animation-delay:-8s">🦀</div>
+<div class="deco" style="top:70%;right:7%;animation-duration:13s;animation-delay:-3s">🐙</div>
+<div class="deco" style="top:25%;right:5%;animation-duration:20s;animation-delay:-10s">🪸</div>
+
+<!-- Fish -->
+<div class="fish" style="top:18%;animation-duration:22s">🐟</div>
+<div class="fish" style="top:42%;animation-duration:30s;animation-delay:-15s;font-size:20px">🐡</div>
+<div class="fish" style="top:65%;animation-duration:18s;animation-delay:-8s;font-size:36px">🐬</div>
+
+<!-- Reaction overlay -->
+<div id="reaction"></div>
+
+<!-- Main App -->
+<div id="app">
+
+  <!-- Title Screen -->
+  <div id="title-screen">
+    <div class="title-creature">🐚</div>
+    <div>
+      <div class="title-main">AutoCAD Ocean Quiz</div>
+      <div class="title-sub">Dive Deep Into Knowledge</div>
+    </div>
+    <div class="title-info">
+      <span>96 questions</span> covering commands, shortcuts, settings &amp; tools<br>
+      Answer correctly to collect pearls 🦪 &bull; Learn from every mistake 🌊
+    </div>
+    <button class="btn-start" onclick="startQuiz()">🦀 Dive In!</button>
+  </div>
+
+  <!-- Quiz Area -->
+  <div id="quiz-area" class="hidden">
+    <div class="progress-meta">
+      <span id="q-counter">Question 1 / 96</span>
+      <span class="score-badge" id="score-badge">⭐ 0 / 0</span>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+
+    <div class="q-card" id="q-card">
+      <div class="q-category">
+        🐙 AutoCAD Mastery <span class="q-num" id="q-num-badge">Q1</span>
+      </div>
+      <div class="q-text" id="q-text"></div>
+      <div class="options" id="options-container"></div>
+      <div id="explanation" class="explanation hidden"></div>
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">
+        Next Question 🐠
+      </button>
+    </div>
+  </div>
+
+  <!-- Results Screen -->
+  <div id="results-screen" class="hidden">
+    <div class="results-creature" id="results-creature">🏆</div>
+    <div class="results-title" id="results-title">Amazing!</div>
+    <div class="results-subtitle" id="results-subtitle">You really know your AutoCAD!</div>
+    <div class="score-circle" id="score-circle">
+      <div class="score-inner">
+        <div class="score-pct" id="score-pct">0%</div>
+        <div class="score-label">SCORE</div>
+      </div>
+    </div>
+    <div class="score-stats">
+      <div class="stat-box">
+        <div class="stat-num good" id="r-correct">0</div>
+        <div class="stat-lbl">CORRECT ✅</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num bad" id="r-wrong">0</div>
+        <div class="stat-lbl">WRONG ❌</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num neutral" id="r-total">0</div>
+        <div class="stat-lbl">TOTAL 🎯</div>
+      </div>
+    </div>
+    <button class="btn-restart" onclick="restartQuiz()">🌊 Dive Again!</button>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// QUESTIONS DATABASE
+// ============================================================
+const ALL_QUESTIONS = [
+  // --- from quiz MD ---
+  {
+    q: "The LAYOFF command turns off the layer of any selected object. What happens if you select an object on the current drafting layer?",
+    options: [
+      "AutoCAD turns off the current drafting layer and sets up a new layer in the Layer Properties Manager.",
+      "AutoCAD turns off the current drafting layer and sets the current drafting layer to Layer 0 (zero).",
+      "AutoCAD prompts you if you want to turn off that layer.",
+      "AutoCAD turns off the current drafting layer with no prompt."
+    ],
+    answer: 2,
+    hint: "AutoCAD is careful — it warns you before turning off the layer you're currently drawing on."
+  },
+  {
+    q: "When matching properties with MATCHPROP between viewports, which setting do you turn OFF to ensure viewport scale is not matched across to a new viewport?",
+    options: ["Special Properties/Viewport","Basic Properties/Layer","Special Properties/Center object","Basic Properties/Linetype Scale"],
+    answer: 3,
+    hint: "Linetype Scale is a basic property that, if matched, would override the destination viewport's scale."
+  },
+  {
+    q: "When using the Multiple Points (POINT) command, which specific AutoCAD setting should you change from the default?",
+    options: ["Change your layer (LAYER) so that points can be seen easily.","Change your color (COLOR) so that points can be seen easily.","Change your linetype (LINETYPE) so that points can be seen easily.","Change your point style (PTYPE) so that points can be seen easily."],
+    answer: 3,
+    hint: "The default point style is just a dot — PTYPE lets you pick a visible symbol like an X or cross."
+  },
+  {
+    q: "When working in a layout, if a viewport is activated and locked and you accidentally zoom in or out, what happens to your viewport scale?",
+    options: ["Nothing. The viewport scale remains the same.","The viewport scale returns to the default 1:1 scale.","The viewport scale changes to the next available standard scale.","The viewport scale changes to a nonstandard scale."],
+    answer: 0,
+    hint: "Locking a viewport is exactly for this purpose — it protects the scale from accidental changes."
+  },
+  {
+    q: "Dynamic Input (DYNMODE) is switched on by default. Which function key do you use to control the Dynamic Input toggle?",
+    options: ["F8","F1","F9","F12 (Windows) or Shift+Command+D (Mac)"],
+    answer: 3,
+    hint: "F12 toggles Dynamic Input on Windows; Mac uses Shift+Command+D."
+  },
+  {
+    q: "What specific annotation setting must be in place in order to place a text annotation in a drawing?",
+    options: ["a multileader style","a dimension style","a table style","a text style"],
+    answer: 3,
+    hint: "Text annotations require a text style defining font, height, and other properties."
+  },
+  {
+    q: "In a standard AutoCAD installation, what does rolling the mouse backward do?",
+    options: ["zoom out","zoom left","zoom in","zoom right"],
+    answer: 0,
+    hint: "Rolling backward (away from you) zooms out — rolling forward zooms in."
+  },
+  {
+    q: "When an inserted block is selected, a single grip is displayed. What is this point known as when the block is created with the BLOCK command?",
+    options: ["origin point","zero point","block origin point","insertion point"],
+    answer: 3,
+    hint: "The insertion point is defined when creating the block and is the anchor for placing it in the drawing."
+  },
+  {
+    q: "External reference files (XREFs) link external drawings to the host drawing. What value should REFPATHTYPE be set to for a relative path?",
+    options: ["REFPATHTYPE = 2","REFPATHTYPE = 3","REFPATHTYPE = 1","REFPATHTYPE = 0"],
+    answer: 2,
+    hint: "REFPATHTYPE = 0 is no path, 1 is relative path, 2 is full/absolute path."
+  },
+  {
+    q: "When you activate a locked viewport and work through it on model space objects, what is this space commonly known as?",
+    options: ["scaled model space","layout model space","floating model space","viewport model space"],
+    answer: 1,
+    hint: "When you double-click inside a viewport in a layout, you enter 'layout model space' (also called floating model space in older versions, but the current accepted term is layout model space)."
+  },
+  {
+    q: "When using annotative scaling with dimensions, which two variables need to match for dimensioning to display in a scaled viewport?",
+    options: ["drawing scale and viewport scale","insertion scale and viewport scale","block scale and viewport scale","annotation scale and viewport scale"],
+    answer: 3,
+    hint: "The annotation scale of the object must match the viewport scale for it to be visible."
+  },
+  {
+    q: "What file do you need to share so another user can use the same tool palette?",
+    options: ["Shared Tool Palette (STP) file","New Tool Palette (NTP) file","Exported Tool Palette (XTP) file","User Tool Palette (UTP) file"],
+    answer: 2,
+    hint: "You export palettes to an XTP file, which another user can then import."
+  },
+  {
+    q: "A crossing selection selects what objects?",
+    options: ["only the objects completely outside the crossing selection","only the objects not encompassed nor crossed by the crossing selection","only the objects completely encompassed by the crossing selection","only the objects completely encompassed and crossed by the crossing selection"],
+    answer: 3,
+    hint: "A crossing selection (right-to-left drag) captures both fully enclosed objects AND objects the selection crosses."
+  },
+  {
+    q: "Where else on the ribbon can you dimension objects, besides the Annotation panel on the Home tab?",
+    options: ["the Dimension panel on the Annotate tab","the Dimensional panel on the Parametric tab","the Palettes panel on the View tab","the Reference panel on the Insert tab"],
+    answer: 0,
+    hint: "The Annotate tab has a dedicated Dimension panel with all dimensioning tools."
+  },
+  {
+    q: "When drawing a group of line segments with the LINE command, which right-click menu option forms a closed boundary snapping back to the start point?",
+    options: ["CLOSE","ENTER","CANCEL","UNDO"],
+    answer: 0,
+    hint: "The CLOSE option connects the last point back to the very first point, forming a closed polygon."
+  },
+  {
+    q: "When creating elliptical arcs in AutoCAD, which default drafting rule do you need to follow?",
+    options: ["Arcs follow a counterclockwise (positive angle value) path.","Arcs follow a clockwise (positive angle value) path.","Arcs always follow a path with a negative angle value.","Arcs follow a user-defined path."],
+    answer: 3,
+    hint: "Unlike regular arcs which default counterclockwise, elliptical arcs follow a user-defined path."
+  },
+  {
+    q: "Linetype Scale (LTSCALE) is applied to what sort of linetypes in AutoCAD drawings?",
+    options: ["any objects that utilize a continuous linetype","any objects that utilize any linetype","any objects that utilize a dashed or dotted linetype, or a combination of both","any objects that utilize a colored or continuous linetype"],
+    answer: 1,
+    hint: "LTSCALE affects ALL linetypes, including continuous ones (though the effect is only visible on non-continuous linetypes)."
+  },
+  {
+    q: "By default, all ARRAY commands make associative arrays. What command converts the array into individual AutoCAD objects?",
+    options: ["EATTEDIT","WBLOCK","EXPLODE","PROPERTIES"],
+    answer: 2,
+    hint: "EXPLODE breaks apart any grouped object — arrays, blocks, polylines — into their individual components."
+  },
+  {
+    q: "Which command opens a folder where you can start the Add-a-Plotter wizard?",
+    options: ["QUICKSETUP","STYLESMANAGER","PLOTTERMANAGER","PLOTTERWIZARD"],
+    answer: 2,
+    hint: "PLOTTERMANAGER opens the Plotters folder containing the wizard shortcut."
+  },
+  {
+    q: "What does the Auto option do in the DIMSPACE (Adjust Space) command?",
+    options: [
+      "Calculates the space as 1.5x the text height of the dimension style being used.",
+      "Calculates the space as twice the distance between the first and second dimensions selected.",
+      "Calculates the space as 3x the text height of the text in the dimension style.",
+      "Calculates based on the alignment of constellations."
+    ],
+    answer: 1,
+    hint: "Auto uses the distance between the first two selected dimensions as the reference, doubling it."
+  },
+  {
+    q: "Where would you find the Isolate menu option for hiding/isolating objects — which is not on the ribbon?",
+    options: ["the status bar","a right-click shortcut menu after object selection","the Quick Access Toolbar (QAT)","the navigation bar"],
+    answer: 1,
+    hint: "Right-click after selecting objects to find Isolate and Hide options in the shortcut menu."
+  },
+  {
+    q: "What command is used to monitor and reset system variables in AutoCAD?",
+    options: ["SYSVARMONITOR","SYSVARMON","SYSTEMVARIABLEMON","SYSVARIABLEMONITOR"],
+    answer: 0,
+    hint: "SYSVARMONITOR is the full, correct command name for the System Variable Monitor dialog."
+  },
+  {
+    q: "When using HIDE or ISOLATE in a drawing, what happens to the layers of hidden or isolated objects?",
+    options: [
+      "The hidden and isolated object layers go on to their own layer.",
+      "The isolated object layers stay on; all other layers are turned off.",
+      "The hidden object layers turn off; all other layers stay on.",
+      "Nothing happens to the layers."
+    ],
+    answer: 3,
+    hint: "HIDE/ISOLATE works at the object level, not the layer level — layers remain unchanged."
+  },
+  {
+    q: "When scaling a drawing from imperial feet and inches to metric millimeters, what scale factor do you use in the SCALE command?",
+    options: ["25.4","0.03937","12.0","0.08333"],
+    answer: 0,
+    hint: "1 inch = 25.4 millimeters, so multiply by 25.4 to convert from inches to mm."
+  },
+  {
+    q: "What prefix symbol should you type in front of 2D X,Y coordinates to tell AutoCAD it is a relative coordinate input?",
+    options: ["#X,Y","@X,Y","R-(X,Y)","REL X,Y"],
+    answer: 1,
+    hint: "The @ symbol tells AutoCAD the coordinates are relative to the last point, not the origin."
+  },
+  {
+    q: "Which AutoCAD system variable controls the extension line overshoots of Center Mark (CENTERMARK) past the circle or arc circumference?",
+    options: ["CENTERRESET","CENTEREXE","CENTERLTSCALE","CENTERMARKEXE"],
+    answer: 3,
+    hint: "CENTERMARKEXE controls how far the extension lines of a center mark extend beyond the geometry."
+  },
+  {
+    q: "Where would you find the Application menu in AutoCAD?",
+    options: ["bottom-left corner of the screen","bottom-right corner of the screen","top-right corner of the screen","top-left corner of the screen"],
+    answer: 3,
+    hint: "The large 'A' (AutoCAD logo) in the top-left corner is the Application menu button."
+  },
+  {
+    q: "You can change a color-dependent plot style table (CTB) drawing to a named plot style table (STB) drawing using which command?",
+    options: ["CONVERTPSTYLES","CONVSTYLES","CONVERTPLOT","CONVPLOTSTYLE"],
+    answer: 0,
+    hint: "CONVERTPSTYLES is the dedicated command for switching between CTB and STB plot style modes."
+  },
+  {
+    q: "For single-line text requiring middle-center justification with a specific height in model space, what is the correct workflow?",
+    options: [
+      "Right-click > Justify > MC > Pick middle point > Type text > Specify height > Specify rotation.",
+      "Right-click > Justify > MC > Specify height > Specify rotation > Pick middle point > Type text.",
+      "Right-click > Justify > MC > Specify height > Specify rotation > Pick middle point > Type text. (duplicate)",
+      "Right-click > Justify > MC > Pick middle point > Drag to set height > Drag to set rotation > Type text."
+    ],
+    answer: 1,
+    hint: "Height and rotation are specified before picking the placement point for justified single-line text."
+  },
+  {
+    q: "When using the Tan Tan Radius (TTR) method to draw a circle in a right-angled corner, which two quadrant grips will be touching other objects?",
+    options: ["the two grips that also act as the tangents in the TTR circle command","the bottom and left grips","the top and right grips","the center and top grips"],
+    answer: 0,
+    hint: "The tangent points on a TTR circle correspond to the grips that touch the two reference objects."
+  },
+  {
+    q: "Which two commands in the Quick Access Toolbar allow you to go backward and forward in your AutoCAD workflow?",
+    options: ["Left and Right","Undo and Redo","Rewind and Fast Forward","Unfix and Fix"],
+    answer: 1,
+    hint: "Undo (Ctrl+Z) goes backward, Redo (Ctrl+Y) goes forward — both are in the QAT by default."
+  },
+  {
+    q: "When in a drawing and you want to make an object's layer the current drafting layer, what command can you use?",
+    options: ["Make Current (LAYMCUR)","Change individual properties in Properties panel.","Match Properties (MATCHPROP)","Match Layer (LAYMCH)"],
+    answer: 3,
+    hint: "LAYMCH (Match Layer) sets the current layer to match a selected object's layer."
+  },
+  {
+    q: "In a regular 2D AutoCAD drawing, what axis notation is used for the horizontal and vertical coordinates?",
+    options: ["X = horizontal, Y = vertical","H = horizontal, V = vertical","A = horizontal, B = vertical","1 = horizontal, 2 = vertical"],
+    answer: 0,
+    hint: "Standard Cartesian coordinates: X runs horizontally (left/right), Y runs vertically (up/down)."
+  },
+  {
+    q: "What command do you use to obtain a point's exact coordinate value in AutoCAD?",
+    options: ["Object Snaps (OSNAP)","Distance (DIST)","ID Point (ID)","List (LIST)"],
+    answer: 2,
+    hint: "The ID command reports the X, Y, Z coordinate of a picked point."
+  },
+  {
+    q: "The DONUT command creates donut-shaped objects. Which two values are needed to place a donut in a drawing?",
+    options: ["internal and external quadrants","internal and external circumference","internal and external diameter","internal and external radius"],
+    answer: 3,
+    hint: "DONUT requires an inside radius and outside radius (or inside/outside diameter, depending on version)."
+  },
+  {
+    q: "An inscribed polygon gives you what type of point at the end of the polygon radius?",
+    options: ["a node","a midpoint","a vertex","a center point"],
+    answer: 3,
+    hint: "An inscribed polygon is drawn inside a circle — the center of that circle is used as the center point."
+  },
+  {
+    q: "In order for object snap tracking to function effectively, what other drafting setting must be switched on?",
+    options: ["Snap and Grid","Dynamic Input","Object Snaps","Polar Tracking"],
+    answer: 3,
+    hint: "Polar Tracking must be on to allow object snap tracking to project alignment paths at defined angles."
+  },
+  {
+    q: "When using the ARRAY command to create copies of objects, what do you use to orient a rectangular array?",
+    options: ["center point and rotation angle","X and Y coordinates","Grid and Snap values","rows and columns"],
+    answer: 1,
+    hint: "Rectangular arrays are defined by their X (column) and Y (row) spacing and directions."
+  },
+  {
+    q: "What type of coordinate does the ID Point command return?",
+    options: ["polar — relative to the last center point","absolute — relative to the origin 0,0","relative — relative to the last point","angled — relative to the last angle of the last object"],
+    answer: 1,
+    hint: "ID always returns absolute coordinates — the distance from the drawing origin (0,0)."
+  },
+  {
+    q: "In the Properties panel on the Home tab, individual color and linetype can be defined, along with what other typical object property?",
+    options: ["description","plottable or not plottable","linetype scale","lineweight"],
+    answer: 3,
+    hint: "The three main object properties you can set individually are color, linetype, and lineweight."
+  },
+  {
+    q: "Which TEXTALIGN setting allows you to set up evenly aligned text to a defined spacing in a drawing?",
+    options: ["setting the spacing distance in the Properties palette","setting the spacing distance on the right-click shortcut menu","the Distribute option","The Set Spacing option"],
+    answer: 3,
+    hint: "Set Spacing allows you to define an exact distance between text objects for even alignment."
+  },
+  {
+    q: "When using named views in the Model tab to navigate, why should you keep an eye on your current drafting layer?",
+    options: [
+      "Each named view has its own current drafting layer.",
+      "Each named view can be saved with a layer snapshot, which might change your current drafting layer.",
+      "Each named view has its own layer with the same name as the view.",
+      "Each named view changes the current drafting layer to a default layer."
+    ],
+    answer: 1,
+    hint: "Named views can store a layer snapshot — restoring the view may also restore a different layer state."
+  },
+  {
+    q: "When using palettes in AutoCAD, why would you dock a palette and then use the auto-hide function?",
+    options: [
+      "To make sure AutoCAD works properly.",
+      "To isolate all the blocks you are using in the current drawing.",
+      "To stop anyone from seeing which AutoCAD palettes you are using.",
+      "To automatically hide the palette content and display only the docked palette title bar."
+    ],
+    answer: 3,
+    hint: "Auto-hide collapses the palette to just its title bar, saving screen space while keeping it accessible."
+  },
+  {
+    q: "Which variable controls the display of the navigation bar, and what value is needed for it to display?",
+    options: ["NAVBARDISPLAY = 1","NAVBARDISPLAY = 0","NAVIGATIONBARDISPLAYON = 1","NAVIGATIONBARDISPLAYON = 0"],
+    answer: 0,
+    hint: "NAVBARDISPLAY = 1 turns the navigation bar on; 0 turns it off."
+  },
+  {
+    q: "In a complex drawing, which selection method (beyond window and crossing) makes selecting specific geometry easier?",
+    options: ["SELECT (S)","LAST (L)","PREVIOUS (P)","FENCE (F)"],
+    answer: 0,
+    hint: "FENCE (F) draws a zigzag selection line that selects anything it crosses, great for complex areas."
+  },
+  {
+    q: "Which part of the AutoCAD interface can you customize to keep the Layer drop-down menu available regardless of which ribbon tab is active?",
+    options: ["The Status Bar","The Navigation Bar","The Quick Access Toolbar (QAT)","The Info Bar"],
+    answer: 2,
+    hint: "The QAT is always visible no matter which ribbon tab you're on — customize it to add the Layer dropdown."
+  },
+  {
+    q: "When drafting with object snaps and object snap tracking, what other drafting setting can you use to set object snap tracking points?",
+    options: ["Polar Tracking (POLAR)","Grid (GRID)","Dynamic Input (DYNMODE)","Snap (SNAP)"],
+    answer: 0,
+    hint: "Polar Tracking angles are used by object snap tracking to project tracking vectors."
+  },
+  {
+    q: "When using the MOVE or COPY command, what is the first point that you must select?",
+    options: ["a displacement point","an endpoint","a base point","a midpoint"],
+    answer: 2,
+    hint: "The base point is the 'handle' from which you measure the move/copy distance."
+  },
+  {
+    q: "When using the OFFSET command, after specifying the offset distance, how do you specify which side to offset?",
+    options: [
+      "Use the Tab key to alternate sides, then press Enter to confirm.",
+      "Move the cursor — OFFSET automatically offsets that side.",
+      "Right-click and use options on the shortcut menu.",
+      "Click to the side of the original object where you want the offset to appear."
+    ],
+    answer: 3,
+    hint: "After specifying the distance, you simply click on the side where you want the offset copy to appear."
+  },
+  {
+    q: "When using the ELLIPSE command with the Axis, End, and Center methods, how many axes are needed to form an ellipse?",
+    options: ["eight","two","six","four"],
+    answer: 1,
+    hint: "An ellipse is defined by two axes: a major axis and a minor axis."
+  },
+  {
+    q: "When hatching with the HATCH command using the pick points method, what setting ensures all selected boundaries form one hatch object?",
+    options: ["Create Separate Hatches","Associative Boundaries","Set the HATCHMULTIPLE variable to 0 (OFF)","Set the HATCHMULTIPLE variable to 1 (ON)"],
+    answer: 2,
+    hint: "HATCHMULTIPLE = 0 forces all hatched areas to be created as a single hatch entity."
+  },
+  {
+    q: "AutoCAD allows you to select objects cumulatively. You can remove individual objects from a selection by using a mouse click combined with which keystroke?",
+    options: ["Tab","Ctrl (Windows) or Command (Mac)","Alt (Windows) or Option (Mac)","Shift"],
+    answer: 3,
+    hint: "Hold Shift and click to deselect individual objects from the current selection set."
+  },
+  {
+    q: "When using multileader blocks, where does AutoCAD first look for user blocks that can be used with multileaders?",
+    options: ["in a known server folder path","in a known cloud server folder path","in the drawing folder","in the drawing file"],
+    answer: 2,
+    hint: "AutoCAD searches the current drawing's folder first for any custom blocks defined for multileaders."
+  },
+  {
+    q: "When using PEDIT to join line segments with gaps, what is the workflow to close gaps automatically?",
+    options: [
+      "Select multiple lines; select Join; you are prompted for GAPDIST — the minimum gap distance.",
+      "Select multiple lines; select Join; you are prompted for FUZZ DISTANCE — the minimum gap distance.",
+      "Select multiple lines; select Join; you are prompted for MINIGAP DISTANCE — the minimum gap.",
+      "Select multiple lines; select Join; you are prompted for MIN GAP DISTANCE — the minimum gap."
+    ],
+    answer: 1,
+    hint: "PEDIT uses 'FUZZ DISTANCE' to define the maximum gap between segments for automatic joining."
+  },
+  {
+    q: "When creating a block with attributes, why should you use underscores between words in the attribute tag?",
+    options: [
+      "Attribute tags must have an underscore to be recognized for data extraction.",
+      "Attribute tags do not allow spaces.",
+      "Attribute tags need an underscore to be recognized by the Block command.",
+      "Attribute tags need an underscore to be visible on the drawing."
+    ],
+    answer: 1,
+    hint: "Attribute tags cannot contain spaces — underscores are used in place of spaces."
+  },
+  {
+    q: "What is a prerequisite to control a table's appearance before inserting a table into a drawing?",
+    options: ["a table dimension style","a table style","a table layer","a table linetype"],
+    answer: 1,
+    hint: "Just like text styles for text, a table style controls the appearance of inserted tables."
+  },
+  {
+    q: "When batch plotting (PUBLISH), what type of file can be saved to retain the batch plotting settings?",
+    options: ["Batch Plotting Description (BPD) file","Drawing Publishing Description (DPD) file","Batch Sheet Description (BSD) file","Drawing Set Description (DSD) file"],
+    answer: 3,
+    hint: "DSD (Drawing Set Description) files store all PUBLISH settings for reuse."
+  },
+  {
+    q: "To create clean, professional plots, which object should be set to 'not plot' in the Layer Properties Manager?",
+    options: ["dimensions","viewports","blocks","text"],
+    answer: 1,
+    hint: "Viewport borders are layout-only objects — they should not appear on the final printed output."
+  },
+  {
+    q: "What system variable and value ensures that selection cycling is switched on and its dialog box appears?",
+    options: ["SELECTIONCYCLING = 0","SELECTIONCYCLING = 2","SELECTIONCYCLING = 1","Press Ctrl+W (Windows) or Command+W (Mac)"],
+    answer: 1,
+    hint: "SELECTIONCYCLING = 2 enables cycling with the dialog box; = 1 enables it without the dialog."
+  },
+  {
+    q: "Splines use the NURBS algorithm in AutoCAD. What does NURBS stand for?",
+    options: ["Non-Unified Rotated Bend Spline","Non-United Rotational Bend Spline","Non-Uniform Rational Basis Spline","Not Uniform Rotational Build Spline"],
+    answer: 2,
+    hint: "NURBS = Non-Uniform Rational Basis Spline — a mathematical model for smooth curves."
+  },
+  {
+    q: "Which layer setting makes sure that layers are automatically frozen in any new viewports?",
+    options: ["VP Freeze","Freeze in Viewport","Freeze in New Viewport","New VP Freeze"],
+    answer: 3,
+    hint: "The 'New VP Freeze' property freezes the layer in any viewport created after the setting is applied."
+  },
+  {
+    q: "When using multiline text, what other type of text (besides TXT) can you import that preserves formatting and fonts?",
+    options: ["Simplex (SHX) text","Microsoft Word text in TrueType font","Rich Text Format (RTF) text","any other type of text apart from TXT text"],
+    answer: 2,
+    hint: "RTF files preserve text formatting like bold, italic, and font choices when imported into MTEXT."
+  },
+  {
+    q: "When using the MOVE command from the right-click shortcut menu, why are you automatically asked to select a base point for your move?",
+    options: [
+      "The object(s) is selected automatically after the base point is selected.",
+      "The object(s) automatically associates into a group once you have selected the base point.",
+      "You are asked to select the object(s) after the base point is selected.",
+      "You have already selected the object(s) to move."
+    ],
+    answer: 3,
+    hint: "Right-clicking after selecting objects means the selection is already done — AutoCAD skips to asking for the base point."
+  },
+  {
+    q: "You can use Polar Tracking to rotate objects when using the ROTATE command. What would you need to set to control the angle?",
+    options: ["Set the Grid and Snap settings.","Set up the running object snaps.","Set the Polar Tracking increment angle.","Set up object snap tracking."],
+    answer: 2,
+    hint: "The Polar Tracking increment angle defines which angles the cursor will snap to during rotation."
+  },
+  {
+    q: "When working with annotative text styles in model space, what two values must match for annotative annotation to display in layout viewports?",
+    options: ["annotation scale and linetype scale","linetype scale and viewport scale","annotation scale and viewport scale","insertion scale and annotation scale"],
+    answer: 2,
+    hint: "Annotative objects only display in viewports where the annotation scale matches the viewport scale."
+  },
+  {
+    q: "The SCALE command needs a scale factor. If you use a scale factor of 2, what does this represent?",
+    options: ["two times bigger in the X direction (200%)","twice as big (200%)","two percent bigger (2%)","half as big (50%)"],
+    answer: 1,
+    hint: "A scale factor of 2 makes the object twice as large in all directions — 200% of its original size."
+  },
+  {
+    q: "Which keys can you press to repeat your last-used AutoCAD command?",
+    options: ["the Page Up key or the Page Down key","the R key or the C key","the Tab key","the Spacebar or the Enter key"],
+    answer: 3,
+    hint: "Pressing Spacebar or Enter when no command is active repeats the last used command."
+  },
+  {
+    q: "When using the Polyline (PLINE) command to draw an arrowhead, what polyline properties do you need to use?",
+    options: ["the Halfwidth setting","starting width and ending width","polyline start and polyline end","the START and END variables in PLINE"],
+    answer: 1,
+    hint: "An arrowhead is a polyline that tapers from a wide starting width to zero ending width."
+  },
+  {
+    q: "Where do you perform the majority of drawing tasks in AutoCAD?",
+    options: ["innerspace","paper space","layout space","model space"],
+    answer: 3,
+    hint: "Model space is the infinite 3D space where all drawing geometry is created."
+  },
+  {
+    q: "To plot the same drawing with the same settings each time, what needs to be set up in AutoCAD?",
+    options: ["the Output tab","the Plot dialog box","batch plotting","Page Setup Manager (Windows) or Page Setup (Mac)"],
+    answer: 3,
+    hint: "Page Setup Manager saves all plot settings (printer, paper size, scale) as named configurations."
+  },
+  {
+    q: "What does it mean when the ARRAY command creates an associative array?",
+    options: [
+      "When dimensioning an array, the dimensions displayed are associative.",
+      "The arrayed objects become a single entity and, when selected, display as a single entity.",
+      "The arrayed objects become associated with the X and Y coordinates used for the array.",
+      "The array is associated with the linetype scale."
+    ],
+    answer: 1,
+    hint: "An associative array is treated as one object — you can edit its parameters (count, spacing) even after creation."
+  },
+  {
+    q: "When drawing a Start, Center, End arc, which key do you press to draw the arc in a clockwise direction?",
+    options: ["C (clockwise)","Alt","D (direction)","Ctrl"],
+    answer: 3,
+    hint: "Holding Ctrl while placing the endpoint reverses the default counterclockwise direction of arcs."
+  },
+  {
+    q: "When using the POLYGON command, besides inscribed and circumscribed, what other type of polygon is available?",
+    options: ["side polygon","polyline polygon","line polygon","edge polygon"],
+    answer: 3,
+    hint: "The Edge option lets you define the polygon by specifying one edge (two endpoints), rather than a radius."
+  },
+  {
+    q: "How would you get a block to display all of its associated grips (not just the insertion point grip)?",
+    options: ["Change the GRIPBLOCK system variable to 1.","Select the block and change it in the Properties palette.","Change the GRIPBLOCK system variable to 0.","Select the block and change it in the right-click shortcut menu."],
+    answer: 0,
+    hint: "GRIPBLOCK = 1 displays all grips within a block; GRIPBLOCK = 0 shows only the insertion point grip."
+  },
+  {
+    q: "You create a layer to show an object's hidden lines, which should be dashed. Which layer property controls if the lines are continuous or dashed?",
+    options: ["Linesize","Linestyle","Lineweight","Linetype"],
+    answer: 3,
+    hint: "Linetype controls the pattern of the line — continuous, dashed, dotted, center, hidden, etc."
+  },
+  {
+    q: "You selected multiple items and four were not supposed to be selected. How do you deselect them?",
+    options: [
+      "Hold down Alt (Windows) or Option (Mac) and select the four items.",
+      "Hold down CTRL (Windows) or Command (Mac) and select the four items.",
+      "Simply select them.",
+      "Hold down Shift and select the four items."
+    ],
+    answer: 3,
+    hint: "Shift+click on selected objects removes them from the current selection set."
+  },
+  {
+    q: "How can you define the angle at which a rectangle is placed using the RECTANGLE command?",
+    options: [
+      "Use the ROTATION option on the ribbon after selecting the first point.",
+      "Use the ROTATION option in the submenu after placing the second point.",
+      "Use the ROTATION option in the submenu after placing the first point.",
+      "Use the ROTATION option in Properties after selecting the rectangle."
+    ],
+    answer: 0,
+    hint: "After picking the first corner point of a rectangle, the ROTATION option appears on the ribbon."
+  },
+  {
+    q: "Why would you use viewports?",
+    options: [
+      "To save specific views of a 2D model.",
+      "To save specific views of a 3D model.",
+      "To display views of model space — you create, scale, and place viewports in paper space on a layout.",
+      "To display views of paper space in model space."
+    ],
+    answer: 2,
+    hint: "Viewports are windows in paper space (layout) that look into model space at a defined scale."
+  },
+  {
+    q: "Your shaft has a 1-inch diameter and can be 0.05 inch smaller or larger. Which tolerance method would you use?",
+    options: ["Engineering","Deviation","Fractional","Symmetrical"],
+    answer: 3,
+    hint: "Symmetrical tolerance means the same +/- value applies equally above and below the nominal dimension."
+  },
+  {
+    q: "When adding Point and Donut objects to their own individual layers, what is the key reason?",
+    options: [
+      "In case the layer needs to be switched off or frozen for clarity in a drawing.",
+      "In case the layer needs to be locked so that it cannot be used by anyone else.",
+      "In case the layer isn't needed anymore.",
+      "In case the layer needs to be renamed for project purposes."
+    ],
+    answer: 0,
+    hint: "Points and donuts are often reference/construction objects that you may want to hide or freeze when printing."
+  },
+  {
+    q: "The default value for LTSCALE is 1. What does this value represent?",
+    options: ["1%","100%","LTSCALE is ON (1)","LTSCALE is OFF (1)"],
+    answer: 2,
+    hint: "LTSCALE = 1 means the linetype scale factor is on at 1:1 — linetype dashes display at their default size."
+  },
+  {
+    q: "Which drafting setting can you use to restrict your cursor to specified angles?",
+    options: ["Grid (GRID)","Dynamic Input (DYNMODE)","Selection Cycling (SELECTIONCYCLING)","Polar Tracking (POLAR)"],
+    answer: 3,
+    hint: "Polar Tracking restricts cursor movement to specific angles, like 45°, 90°, etc."
+  },
+  {
+    q: "What is the file extension of an AutoCAD Drawing Standard file?",
+    options: ["DWGS","DWGSTDS","DWFS","DWS"],
+    answer: 3,
+    hint: "AutoCAD Drawing Standard files use the .DWS extension (not to be confused with .DWG drawing files)."
+  },
+  {
+    q: "With the default setting in place, double-clicking the mouse wheel invokes which AutoCAD command?",
+    options: ["Zoom Previous","Zoom Windows","Zoom Extents","Zoom All"],
+    answer: 2,
+    hint: "Double-clicking (or pressing) the middle mouse button zooms to the extents of all objects in the drawing."
+  },
+  {
+    q: "A window selection selects only the objects _____ the window selection.",
+    options: [
+      "Completely encompassed by.",
+      "Crossed by (Crossing selection — window drawn left-to-right, top-to-bottom).",
+      "Completely outside by.",
+      "Not encompassed by."
+    ],
+    answer: 0,
+    hint: "A window selection (left-to-right drag) only selects objects FULLY inside the window."
+  },
+  {
+    q: "When using Hatch with the Pick Point method, which mode should be turned OFF to ensure the hatch is a single entity?",
+    options: ["Create Separate Hatches","Associative Boundaries","Hatch Associative (HPASSOC)","Hatch Multiple (HATCHMULTIPLE)"],
+    answer: 0,
+    hint: "Turning off 'Create Separate Hatches' ensures all picked boundary areas are grouped into one hatch object."
+  },
+  {
+    q: "You want to constrain a line so it is always horizontal. Which tool helps accomplish this?",
+    options: ["Geometric Constraint (GCHORIZONTAL)","Horizontal Line (HORIZONTAL)","Line (LINE)","Polyline (PLINE)"],
+    answer: 0,
+    hint: "GCHORIZONTAL applies a horizontal geometric constraint, keeping the line horizontal even if you move its endpoints."
+  },
+  {
+    q: "Which part of the AutoCAD interface can you customize to allow the Layer drop-down menu to be available regardless of which ribbon tab you're using?",
+    options: ["The Status Bar","The Navigation Bar","The Quick Access Toolbar (QAT)","The Info Bar"],
+    answer: 2,
+    hint: "The QAT (Quick Access Toolbar) is persistent across all ribbon tabs — customize it to add frequently used controls."
+  },
+  {
+    q: "When drawing a Start, Center, or End arc, which key draws the arc in a clockwise direction?",
+    options: ["D (direction)","C (clockwise)","Ctrl (Windows) or Command (Mac)","Alt (Windows) or Option (Mac)"],
+    answer: 2,
+    hint: "Ctrl reverses the default counterclockwise direction for arcs, drawing them clockwise instead."
+  },
+  {
+    q: "When using the HATCH command with Pick Point, which mode should be turned OFF to ensure the resulting hatch is a single entity?",
+    options: ["Hatch Associative (HPASSOC)","Hatch Multiple (HATCHMULTIPLE)","Associative Boundaries","Create Separate Hatches"],
+    answer: 1,
+    hint: "HATCHMULTIPLE = OFF prevents AutoCAD from creating separate hatch objects for each picked boundary."
+  },
+  {
+    q: "You can make a global linetype scale change with LTSCALE. The default value is 1. What does LTSCALE = 1 represent?",
+    options: ["100%","LTSCALE is OFF (1)","LTSCALE is ON (1)","1%"],
+    answer: 2,
+    hint: "LTSCALE = 1 means linetype scaling is active at a 1:1 ratio — the baseline scale."
+  },
+  {
+    q: "In AutoCAD, a circle has five grips. When using TTR (Tan Tan Radius) to draw a circle in a right-angled corner, which two quadrant grips will touch other objects?",
+    options: [
+      "the two grips that act as the tangents in the TTR circle command",
+      "the bottom and left grips",
+      "the top and right grips",
+      "the center and top grips"
+    ],
+    answer: 1,
+    hint: "In a right-angled corner (e.g., bottom-left corner), the circle touches the bottom and left walls — bottom and left quadrant grips."
+  },
+
+  // --- Additional Knowledge Questions from Study Materials ---
+  {
+    q: "What keyboard shortcut do you type to activate the LINE command in AutoCAD?",
+    options: ["LN","LI","L","LA"],
+    answer: 2,
+    hint: "The single-letter shortcut L is one of AutoCAD's most fundamental commands — it activates LINE."
+  },
+  {
+    q: "What keyboard shortcut activates the CIRCLE command?",
+    options: ["CI","CR","CIR","C"],
+    answer: 3,
+    hint: "C is the shortcut for CIRCLE — one of the most commonly used drawing commands."
+  },
+  {
+    q: "What keyboard shortcut activates the ERASE command?",
+    options: ["ER","DEL","E","EA"],
+    answer: 2,
+    hint: "E is the shortcut for ERASE. You can also press Delete after selecting objects."
+  },
+  {
+    q: "What keyboard shortcut activates the OFFSET command?",
+    options: ["OF","OS","OFS","O"],
+    answer: 3,
+    hint: "O is the shortcut for OFFSET — used to create parallel copies at a specified distance."
+  },
+  {
+    q: "What keyboard shortcut activates the TRIM command?",
+    options: ["TI","TRM","TR","T"],
+    answer: 2,
+    hint: "TR is the shortcut for TRIM — used to cut objects at a defined boundary edge."
+  },
+  {
+    q: "What keyboard shortcut activates the MOVE command?",
+    options: ["MO","MV","M","MV"],
+    answer: 2,
+    hint: "M is the shortcut for MOVE — used to reposition objects from a base point to a destination."
+  },
+  {
+    q: "What function key toggles ORTHO mode on and off?",
+    options: ["F6","F7","F8","F9"],
+    answer: 2,
+    hint: "F8 toggles Ortho mode, which restricts cursor movement to horizontal and vertical directions only."
+  },
+  {
+    q: "What function key toggles GRID display on and off?",
+    options: ["F5","F6","F7","F8"],
+    answer: 2,
+    hint: "F7 toggles the grid display. The grid is a visual reference — it does not affect drawing unless SNAP is on."
+  },
+  {
+    q: "What function key toggles Object Snaps (OSNAP) on and off?",
+    options: ["F2","F3","F4","F5"],
+    answer: 1,
+    hint: "F3 toggles OSNAP. Object snaps allow precision picking of geometric points like endpoints and midpoints."
+  },
+  {
+    q: "What function key toggles SNAP mode on and off?",
+    options: ["F8","F9","F10","F11"],
+    answer: 1,
+    hint: "F9 toggles SNAP, which locks the cursor to a defined grid spacing for precise input."
+  },
+  {
+    q: "What function key toggles POLAR TRACKING on and off?",
+    options: ["F9","F10","F11","F12"],
+    answer: 1,
+    hint: "F10 toggles Polar Tracking, which guides the cursor along defined angular increments."
+  },
+  {
+    q: "What keyboard shortcut activates the HATCH command?",
+    options: ["HA","HT","HC","H"],
+    answer: 3,
+    hint: "H is the shortcut for HATCH — used to fill enclosed areas with patterns or solid fills."
+  },
+  {
+    q: "What keyboard shortcut activates the BLOCK definition command?",
+    options: ["BL","BK","BD","B"],
+    answer: 3,
+    hint: "B is the shortcut for BLOCK — opens the Block Definition dialog."
+  },
+  {
+    q: "What keyboard shortcut activates the ZOOM command?",
+    options: ["ZM","ZO","ZO","Z"],
+    answer: 3,
+    hint: "Z is the shortcut for ZOOM. Follow it with E for Extents, A for All, W for Window, etc."
+  },
+  {
+    q: "What does the AutoCAD shortcut command 'DI' stand for?",
+    options: ["Dimension","Display","Distance","Diagonal"],
+    answer: 2,
+    hint: "DI stands for DISTANCE — it measures the distance and angle between two picked points."
+  },
+  {
+    q: "What does the AutoCAD shortcut 'RO' stand for?",
+    options: ["Redraw Object","Rotate","Rectangular Object","Reference Origin"],
+    answer: 1,
+    hint: "RO is the shortcut for ROTATE — it rotates selected objects around a base point by a specified angle."
+  },
+  {
+    q: "What does the AutoCAD shortcut 'PE' stand for?",
+    options: ["Purge Elements","Polyline Edit","Print Environment","Path Edit"],
+    answer: 1,
+    hint: "PE stands for PEDIT (Polyline Edit) — used to edit polylines, convert lines to polylines, and close/open polylines."
+  },
+  {
+    q: "What does the AutoCAD shortcut 'X' stand for?",
+    options: ["X-axis command","Exit AutoCAD","Explode","XREF manager"],
+    answer: 2,
+    hint: "X is the shortcut for EXPLODE — it breaks complex objects (blocks, arrays, polylines) into individual parts."
+  },
+  {
+    q: "In AutoCAD, what does rolling the mouse wheel forward (toward you) do by default?",
+    options: ["Zoom out","Pan right","Zoom in","Pan up"],
+    answer: 2,
+    hint: "Rolling the mouse wheel forward zooms in, rolling backward zooms out — the most common navigation method."
+  },
+  {
+    q: "What does holding down the middle mouse button (scroll wheel) do in AutoCAD?",
+    options: ["Zooms to extents","Activates Pan","Opens object properties","Enters selection mode"],
+    answer: 1,
+    hint: "Holding and dragging the middle mouse button activates real-time Pan — moving the view without zooming."
+  },
+  {
+    q: "What does pressing ESC do in AutoCAD?",
+    options: ["Saves the drawing","Undoes the last action","Escapes/cancels the current command","Exits AutoCAD"],
+    answer: 2,
+    hint: "ESC cancels the current active command and clears any selection set — a fundamental shortcut."
+  },
+  {
+    q: "Which AutoCAD command is used to spell-check text in a drawing?",
+    options: ["SPELLCHECK","TEXT","SP","CHECKSPELL"],
+    answer: 2,
+    hint: "SP is the shortcut for SPELL — it checks spelling in all text objects in the drawing."
+  },
+  {
+    q: "Which command creates a paragraph (multi-line) text object in AutoCAD?",
+    options: ["TEXT","DTEXT","MTEXT","PTEXT"],
+    answer: 2,
+    hint: "MTEXT (Multi-line Text) creates a text object that supports word wrap, formatting, and imported text."
+  },
+  {
+    q: "The FILLET command is used to connect two lines with a rounded arc. What does setting the fillet radius to 0 do?",
+    options: ["Creates a very small fillet","Makes the lines meet at a sharp corner","Has no effect","Removes the fillet command"],
+    answer: 1,
+    hint: "A fillet radius of 0 makes the two lines meet at an exact sharp corner — very useful for cleaning up line intersections."
+  },
+  {
+    q: "What is the XREF (External Reference) command used for in AutoCAD?",
+    options: [
+      "To create cross-references in text annotations",
+      "To link external drawing files into the host drawing without permanently embedding them",
+      "To reference a specific point in model space",
+      "To create external backup files of the drawing"
+    ],
+    answer: 1,
+    hint: "XREFs link external DWG files — changes to the source file update in the host drawing, making them ideal for team environments."
+  },
+  {
+    q: "What is the purpose of the PURGE (PU) command in AutoCAD?",
+    options: [
+      "To remove all objects from the drawing",
+      "To clean up unused named objects like layers, linetypes, and blocks from the drawing database",
+      "To permanently delete the undo history",
+      "To compress and save the drawing file"
+    ],
+    answer: 1,
+    hint: "PURGE removes unused definitions (empty layers, unused blocks, etc.) to reduce file size and keep the drawing clean."
+  },
+  {
+    q: "What does the AutoCAD shortcut 'AA' stand for?",
+    options: ["Auto-Align","Arc Angle","Area","Attribute Annotation"],
+    answer: 2,
+    hint: "AA stands for AREA — it calculates the area and perimeter of selected objects or defined points."
+  },
+  {
+    q: "What does the shortcut 'DS' do in AutoCAD?",
+    options: ["Design Sheet","Drafting Settings","Drawing Setup","Display Settings"],
+    answer: 1,
+    hint: "DS opens the Drafting Settings dialog, where you configure SNAP, GRID, POLAR, OSNAP, and other settings."
+  },
+  {
+    q: "In AutoCAD, which keyboard shortcut activates the ARC command?",
+    options: ["AR","AC","A","ARC"],
+    answer: 2,
+    hint: "A is the single-letter shortcut for ARC. Arcs can be drawn by various methods: Start-Center-End, 3-Point, etc."
+  },
+  {
+    q: "What does the shortcut 'F' do in AutoCAD?",
+    options: ["Freeze layer","Fillet","Find text","Fit to window"],
+    answer: 1,
+    hint: "F is the shortcut for FILLET — it connects two objects with a rounded arc of a specified radius."
+  },
+  {
+    q: "Which command allows you to write selected objects to a new, separate DWG file?",
+    options: ["SAVEOBJ","WBLOCK (W)","EXPORT","BLOCK"],
+    answer: 1,
+    hint: "WBLOCK (shortcut W) writes selected objects or a block definition to an external DWG file."
+  },
+  {
+    q: "What does the AUDIT command do?",
+    options: [
+      "Checks drawing history and who made changes",
+      "Finds and fixes errors in the drawing file structure",
+      "Creates a list of all objects in the drawing",
+      "Compares two drawings for differences"
+    ],
+    answer: 1,
+    hint: "AUDIT scans the drawing database for structural errors and optionally repairs them — useful for corrupted files."
+  },
+  {
+    q: "What is the purpose of the LIMITS command in AutoCAD?",
+    options: [
+      "Limits the number of objects you can draw",
+      "Sets the maximum zoom level",
+      "Defines the X,Y boundaries of the drawing area",
+      "Restricts which layers can be used"
+    ],
+    answer: 2,
+    hint: "LIMITS sets the rectangular boundary of the drawing area, usually matching the paper size you intend to print on."
+  },
+  {
+    q: "When you type coordinates as 'X<angle' (e.g., 5<45) in AutoCAD, what type of coordinates are these?",
+    options: ["Absolute Cartesian","Relative Cartesian","Polar (distance and angle)","3D coordinates"],
+    answer: 2,
+    hint: "The format distance<angle specifies polar coordinates — a point at a given distance in a given direction."
+  },
+  {
+    q: "In a Layout (paper space) tab, what does 'PAPER' or 'MODEL' on the status bar indicate?",
+    options: [
+      "Whether you're in the Paper orientation or Model orientation",
+      "Whether you're currently in paper space or model space within the layout",
+      "The paper size currently selected for plotting",
+      "Whether the drawing is saved or unsaved"
+    ],
+    answer: 1,
+    hint: "Clicking PAPER/MODEL on the status bar toggles between paper space and the floating model space within a viewport."
+  },
+  {
+    q: "What is the keyboard shortcut to SAVE a drawing in AutoCAD (quick save)?",
+    options: ["QSAVE (Ctrl+S)","SAVEAS (Ctrl+Shift+S)","SAVE (Ctrl+W)","AUTOSAVE (Ctrl+A)"],
+    answer: 0,
+    hint: "QSAVE (Quick Save) saves the current drawing to its existing filename. The shortcut is Ctrl+S."
+  }
+];
+
+// ============================================================
+// APP STATE
+// ============================================================
+let questions = [];
+let currentIndex = 0;
+let score = 0;
+let answered = 0;
+let answered_flags = [];
+
+// ============================================================
+// INIT
+// ============================================================
+function initBubbles() {
+  const ocean = document.querySelector('.ocean-bg');
+  for (let i = 0; i < 18; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = 4 + Math.random() * 14;
+    b.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      animation-duration:${6+Math.random()*14}s;
+      animation-delay:-${Math.random()*14}s;
+    `;
+    ocean.appendChild(b);
+  }
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  questions = shuffle(ALL_QUESTIONS);
+  currentIndex = 0; score = 0; answered = 0;
+  answered_flags = new Array(questions.length).fill(false);
+  document.getElementById('title-screen').classList.add('hidden');
+  document.getElementById('quiz-area').classList.remove('hidden');
+  renderQuestion();
+}
+
+function restartQuiz() {
+  document.getElementById('results-screen').classList.add('hidden');
+  startQuiz();
+}
+
+// ============================================================
+// RENDER QUESTION
+// ============================================================
+function renderQuestion() {
+  const q = questions[currentIndex];
+  const total = questions.length;
+  const pct = (currentIndex / total) * 100;
+
+  document.getElementById('q-counter').textContent = `Question ${currentIndex+1} / ${total}`;
+  document.getElementById('score-badge').textContent = `⭐ ${score} / ${answered}`;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('q-num-badge').textContent = `Q${currentIndex+1}`;
+
+  // Animate card in
+  const card = document.getElementById('q-card');
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = '';
+
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('explanation').classList.add('hidden');
+  document.getElementById('explanation').textContent = '';
+
+  const btn = document.getElementById('btn-next');
+  btn.classList.remove('visible');
+
+  const container = document.getElementById('options-container');
+  container.innerHTML = '';
+  const letters = ['A','B','C','D'];
+
+  q.options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.innerHTML = `<div class="opt-letter">${letters[i]}</div><div class="opt-text">${opt}</div>`;
+    div.addEventListener('click', () => selectAnswer(i));
+    div.addEventListener('mousemove', (e) => {
+      const rect = div.getBoundingClientRect();
+      div.style.setProperty('--mx', ((e.clientX - rect.left)/rect.width*100)+'%');
+      div.style.setProperty('--my', ((e.clientY - rect.top)/rect.height*100)+'%');
+    });
+    container.appendChild(div);
+  });
+}
+
+// ============================================================
+// ANSWER LOGIC
+// ============================================================
+function selectAnswer(selectedIdx) {
+  if (answered_flags[currentIndex]) return;
+  answered_flags[currentIndex] = true;
+  answered++;
+
+  const q = questions[currentIndex];
+  const isCorrect = selectedIdx === q.answer;
+  if (isCorrect) score++;
+
+  // Update score badge
+  document.getElementById('score-badge').textContent = `⭐ ${score} / ${answered}`;
+
+  const opts = document.querySelectorAll('.option');
+  opts.forEach((opt, i) => {
+    opt.classList.add('disabled');
+    if (i === q.answer) opt.classList.add(isCorrect && i === selectedIdx ? 'correct' : 'reveal');
+    if (i === selectedIdx && !isCorrect) opt.classList.add('wrong');
+  });
+  if (selectedIdx === q.answer) opts[selectedIdx].classList.remove('reveal');
+
+  // Show explanation
+  const expEl = document.getElementById('explanation');
+  expEl.textContent = `💡 ${q.hint}`;
+  expEl.classList.remove('hidden');
+
+  // Reaction animation
+  showReaction(isCorrect);
+
+  // Show next button
+  const btn = document.getElementById('btn-next');
+  btn.textContent = currentIndex < questions.length - 1
+    ? (isCorrect ? '🐠 Next Question' : '🐙 Keep Swimming')
+    : '🏆 See Results';
+  btn.classList.add('visible');
+}
+
+// ============================================================
+// REACTION OVERLAY
+// ============================================================
+function showReaction(isCorrect) {
+  const el = document.getElementById('reaction');
+  el.innerHTML = '';
+
+  const correct_emojis = ['🌟','⭐','🐚','🦪','🏆','🐠','🌊','✨','🐬','🦭'];
+  const wrong_emojis = ['🦑','💦','🌊','🐙','😬','🦀','🐡','💧'];
+  const emojis = isCorrect ? correct_emojis : wrong_emojis;
+  const main = emojis[Math.floor(Math.random()*emojis.length)];
+
+  const burst = document.createElement('div');
+  burst.className = 'reaction-burst';
+  burst.textContent = main;
+  el.appendChild(burst);
+
+  // Particles
+  const pWrap = document.createElement('div');
+  pWrap.className = 'particles';
+  const colors = isCorrect
+    ? ['#2ecc71','#a8e6cf','#27ae60','#f4d03f','#00bcd4']
+    : ['#e74c3c','#ff6b6b','#c0392b','#ff9800'];
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 6 + Math.random()*12;
+    const angle = (Math.random()*360) * Math.PI/180;
+    const dist = 60 + Math.random()*200;
+    p.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:calc(50% + ${Math.cos(angle)*20}px);
+      top:calc(50% + ${Math.sin(angle)*20}px);
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      --dx:${Math.cos(angle)*dist}px;
+      --dy:${Math.sin(angle)*dist}px;
+      animation-delay:${Math.random()*0.2}s;
+      animation-duration:${0.6+Math.random()*0.4}s;
+    `;
+    pWrap.appendChild(p);
+  }
+  el.appendChild(pWrap);
+
+  setTimeout(() => { el.innerHTML = ''; }, 1200);
+}
+
+// ============================================================
+// NEXT QUESTION
+// ============================================================
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex >= questions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+// ============================================================
+// RESULTS
+// ============================================================
+function showResults() {
+  document.getElementById('quiz-area').classList.add('hidden');
+  const rs = document.getElementById('results-screen');
+  rs.classList.remove('hidden');
+
+  const pct = Math.round((score / questions.length) * 100);
+  document.getElementById('r-correct').textContent = score;
+  document.getElementById('r-wrong').textContent = questions.length - score;
+  document.getElementById('r-total').textContent = questions.length;
+  document.getElementById('score-pct').textContent = pct + '%';
+
+  // Animate score circle
+  const circle = document.getElementById('score-circle');
+  circle.style.setProperty('--pct', '0%');
+  setTimeout(() => {
+    circle.style.transition = 'all 1.5s cubic-bezier(.4,0,.2,1)';
+    circle.style.setProperty('--pct', pct + '%');
+  }, 100);
+
+  // Choose result message
+  let creature, title, subtitle;
+  if (pct >= 90) {
+    creature = '🏆'; title = 'Deep Sea Expert!';
+    subtitle = 'You command AutoCAD like a master of the deep! 🌊';
+  } else if (pct >= 75) {
+    creature = '🐬'; title = 'Ocean Navigator!';
+    subtitle = 'Excellent work! You clearly know your way around AutoCAD.';
+  } else if (pct >= 60) {
+    creature = '🐠'; title = 'Reef Explorer!';
+    subtitle = 'Good effort! Keep practicing and you\'ll master the deep.';
+  } else if (pct >= 40) {
+    creature = '🐡'; title = 'Young Diver!';
+    subtitle = 'Keep swimming deeper — review the study guides and try again!';
+  } else {
+    creature = '🦀'; title = 'Shore Beginner!';
+    subtitle = 'The ocean of AutoCAD is vast. Study up and dive back in!';
+  }
+  document.getElementById('results-creature').textContent = creature;
+  document.getElementById('results-title').textContent = title;
+  document.getElementById('results-subtitle').textContent = subtitle;
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+initBubbles();
+</script>
+</body>
+</html>
